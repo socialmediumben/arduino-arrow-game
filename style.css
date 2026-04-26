@@ -3,6 +3,7 @@
   margin: 0;
   padding: 0;
 }
+
 :root {
   --bg-color: #0d1117;
   --glass-bg: rgba(22, 27, 34, 0.6);
@@ -14,6 +15,7 @@
   --success: #3fb950;
   --text-main: #c9d1d9;
 }
+
 body {
   font-family: 'Outfit', sans-serif;
   background-color: var(--bg-color);
@@ -27,6 +29,7 @@ body {
   align-items: center;
   overflow: hidden;
 }
+
 .screen {
   display: none;
   width: 100%;
@@ -36,13 +39,16 @@ body {
   align-items: center;
   animation: fadeIn 0.4s ease-out forwards;
 }
+
 .screen.active {
   display: flex;
 }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);
@@ -54,23 +60,28 @@ body {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   max-width: 500px;
 }
+
 .glass-panel h1 {
   font-size: 2.5rem;
   margin-bottom: 1rem;
   color: #fff;
 }
+
 .glass-panel p {
   color: #8b949e;
   margin-bottom: 2rem;
   line-height: 1.5;
 }
+
 .emergency {
   border-color: var(--danger);
   box-shadow: 0 0 40px var(--danger-glow);
 }
+
 .emergency h1 {
   color: var(--danger);
 }
+
 .glow-btn {
   background: transparent;
   color: var(--accent);
@@ -83,11 +94,13 @@ body {
   transition: all 0.2s ease;
   font-family: inherit;
 }
+
 .glow-btn:hover {
   background: var(--accent);
   color: #fff;
   box-shadow: 0 0 20px var(--accent-glow);
 }
+
 .header {
   position: absolute;
   top: 2rem;
@@ -95,6 +108,7 @@ body {
   display: flex;
   justify-content: center;
 }
+
 .score-display {
   font-size: 2rem;
   font-weight: 600;
@@ -104,33 +118,44 @@ body {
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(8px);
 }
+
 .game-board {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3rem;
 }
-#target-container {
-  width: 250px;
-  height: 250px;
+
+#targets-wrapper {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.target-box {
+  width: 200px;
+  height: 200px;
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 8rem;
+  font-size: 7rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   transition: transform 0.1s ease;
 }
+
 .pop-animation {
   animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
 @keyframes pop {
   0% { transform: scale(0.8); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
+
 .timer-bar-container {
   width: 400px;
   height: 12px;
@@ -138,6 +163,7 @@ body {
   border-radius: 6px;
   overflow: hidden;
 }
+
 #timer-bar {
   height: 100%;
   width: 100%;

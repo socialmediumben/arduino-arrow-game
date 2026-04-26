@@ -17,6 +17,7 @@
       <button id="connect-btn" class="glow-btn">Connect Arduino</button>
     </div>
   </div>
+
   <!-- Game Screen -->
   <div id="game-screen" class="screen">
     <div class="header">
@@ -24,8 +25,9 @@
     </div>
     
     <div class="game-board">
-      <div id="target-container">
-        <!-- Target arrow will be injected here -->
+      <div id="targets-wrapper">
+        <div id="direction-container" class="target-box"></div>
+        <div id="action-container" class="target-box"></div>
       </div>
       
       <div class="timer-bar-container">
@@ -33,6 +35,7 @@
       </div>
     </div>
   </div>
+
   <!-- Game Over Screen -->
   <div id="game-over-screen" class="screen">
     <div class="glass-panel emergency">
@@ -42,6 +45,7 @@
       <button id="restart-btn" class="glow-btn" style="margin-top: 2rem;">Reset Game</button>
     </div>
   </div>
+
   <script src="script.js" type="module"></script>
 </body>
 </html>
