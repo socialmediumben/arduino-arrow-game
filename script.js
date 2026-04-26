@@ -27,6 +27,11 @@ function switchScreen(activeScreen) {
   activeScreen.classList.add('active');
 }
 connectBtn.addEventListener('click', async () => {
+  if (!navigator.serial) {
+    alert("Sorry! The Web Serial API is not supported in this browser. You must use Google Chrome or Microsoft Edge on a desktop computer to connect to the Arduino.");
+    return;
+  }
+  
   try {
     // Request a port and open a connection
     port = await navigator.serial.requestPort();
@@ -142,3 +147,13 @@ async function readLoop() {
     reader.releaseLock();
   }
 }
+// Global key listener for arcade cabinet convenience
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if (connectScreen.classList.contains('active')) {
+      connectBtn.click(); // Triggers the Serial connection prompt
+    } else if (gameOverScreen.classList.contains('active')) {
+      restartBtn.click(); // Restarts the game after failure
+    }
+  }
+});
