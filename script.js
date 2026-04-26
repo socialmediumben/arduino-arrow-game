@@ -8,6 +8,7 @@ const connectScreen = document.getElementById('connect-screen');
 const gameScreen = document.getElementById('game-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const connectBtn = document.getElementById('connect-btn');
+const skipBtn = document.getElementById('skip-btn');
 const directionContainer = document.getElementById('direction-container');
 const actionContainer = document.getElementById('action-container');
 const timerBar = document.getElementById('timer-bar');
@@ -70,6 +71,15 @@ connectBtn.addEventListener('click', async () => {
       alert('Failed to connect to Arduino!\n\nReason: ' + err.message + '\n\nMake sure the Arduino IDE Serial Monitor is CLOSED! Only one program can use the port at a time.');
     }
   }
+});
+
+skipBtn.addEventListener('click', () => {
+  port = null;
+  writer = null;
+  switchScreen(gameScreen);
+  score = 0;
+  updateScore();
+  nextRound();
 });
 
 function nextRound() {
