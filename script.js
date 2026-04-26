@@ -63,7 +63,8 @@ let navCol = 0;
 function buildNavMenuForScreen(screenId) {
    if (screenId === 'connect-screen') {
       navGrid = [
-         [document.getElementById('connect-btn'), document.getElementById('skip-btn')],
+         [document.getElementById('connect-btn')],
+         [document.getElementById('skip-btn')],
          Array.from(document.querySelectorAll('#connect-screen .diff-btn'))
       ];
       navRow = 0; navCol = 0;
