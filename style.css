@@ -74,8 +74,8 @@ body {
 }
 
 .emergency {
-  border-color: var(--danger);
-  box-shadow: 0 0 40px var(--danger-glow);
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 40px var(--danger-glow) !important;
 }
 
 .emergency h1 {
@@ -93,6 +93,7 @@ body {
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
+  outline: none;
 }
 
 .glow-btn:hover {
@@ -123,52 +124,71 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3rem;
+  margin-top: 6rem;
 }
 
-#targets-wrapper {
+#game-lanes {
   display: flex;
-  gap: 2rem;
+  gap: 0px;
+  height: 600px;
+  width: 800px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  overflow: hidden;
+  transition: all 0.1s ease;
+}
+
+.lane {
+  flex: 1;
+  border-right: 2px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  display: flex;
   justify-content: center;
+}
+
+.lane:last-child {
+  border-right: none;
 }
 
 .target-box {
-  width: 200px;
-  height: 200px;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 30px;
+  position: absolute;
+  bottom: 20px;
+  width: 80px;
+  height: 80px;
+  border: 4px solid rgba(255,255,255,0.1);
+  border-radius: 15px;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 7rem;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  transition: transform 0.1s ease;
+  font-size: 3.5rem;
+  color: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+  transition: all 0.1s ease;
 }
 
-.pop-animation {
-  animation: pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+/* Lights up when key is pressed natively */
+.lane.active-press .target-box {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: inset 0 0 30px var(--accent-glow), 0 0 30px var(--accent-glow);
+  transform: scale(0.95);
 }
 
-@keyframes pop {
-  0% { transform: scale(0.8); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-.timer-bar-container {
-  width: 400px;
-  height: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-#timer-bar {
-  height: 100%;
-  width: 100%;
+.note {
+  position: absolute;
+  top: 0px; 
+  left: calc(50% - 40px);
+  width: 80px;
+  height: 80px;
   background: var(--accent);
-  border-radius: 6px;
-  /* Transition handles the shrinking */
-  transition: width linear;
+  border-radius: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 3.5rem;
+  color: #fff;
+  box-shadow: 0 0 20px var(--accent-glow), inset 0 0 10px rgba(255,255,255,0.5);
+  will-change: transform;
 }

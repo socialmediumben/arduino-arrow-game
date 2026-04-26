@@ -1,74 +1,65 @@
 let port;
 let writer;
 let score = 0;
-let currentTargetIndex = 0;
-let timerTimeout;
+let strikes = 0;
+const MAX_STRIKES = 3;
 
+// Game engine variables
+let gameLoopId;
+let lastTimestamp = 0;
+let activeNotes = [];
+let isPlaying = false;
+let nextSpawnTime = 0;
+const pressedKeys = new Set();
+
+const laneConfig = [
+  { id: 'lane-arrowleft', key: 'arrowleft', symbol: '⇦' },
+  { id: 'lane-arrowdown', key: 'arrowdown', symbol: '⇩' },
+  { id: 'lane-arrowup', key: 'arrowup', symbol: '⇧' },
+  { id: 'lane-arrowright', key: 'arrowright', symbol: '⇨' },
+  { id: 'lane-a', key: 'a', symbol: 'A' },
+  { id: 'lane-b', key: 'b', symbol: 'B' }
+];
+
+const TRACK_HEIGHT = 600; 
+const TARGET_Y = 500; // Target boxes are at bottom: 20px. 600 - 20 - 80 height = 500.
+const HIT_WINDOW_HALF = 80; // +/- 80 pixels is exactly the threshold of visually "touching" the box
+
+// UI Elements
 const connectScreen = document.getElementById('connect-screen');
 const gameScreen = document.getElementById('game-screen');
 const gameOverScreen = document.getElementById('game-over-screen');
 const connectBtn = document.getElementById('connect-btn');
 const skipBtn = document.getElementById('skip-btn');
-const directionContainer = document.getElementById('direction-container');
-const actionContainer = document.getElementById('action-container');
-const timerBar = document.getElementById('timer-bar');
 const scoreEl = document.getElementById('score');
+const strikesEl = document.getElementById('strikes');
 const finalScoreEl = document.getElementById('final-score');
 const restartBtn = document.getElementById('restart-btn');
+const lanesContainer = document.getElementById('game-lanes');
 
-// Defining the 4 directions
-const arrows = [
-  { key: 'ArrowUp', symbol: '⇧' },
-  { key: 'ArrowDown', symbol: '⇩' },
-  { key: 'ArrowLeft', symbol: '⇦' },
-  { key: 'ArrowRight', symbol: '⇨' }
-];
-
-const actions = [
-  { key: 'a', symbol: 'A' },
-  { key: 'b', symbol: 'B' }
-];
-
-let currentDirectionTarget = null;
-let currentActionTarget = null;
-const pressedKeys = new Set();
-const validGameKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'a', 'b'];
-
-const TIME_LIMIT_MS = 1000;
-
+// --- Screen Switching Utilities ---
 function switchScreen(activeScreen) {
-  [connectScreen, gameScreen, gameOverScreen].forEach(screen => {
-    screen.classList.remove('active');
-  });
+  [connectScreen, gameScreen, gameOverScreen].forEach(s => s.classList.remove('active'));
   activeScreen.classList.add('active');
 }
 
+// --- Serial Connection Events ---
 connectBtn.addEventListener('click', async () => {
   if (!navigator.serial) {
-    alert("Sorry! The Web Serial API is not supported in this browser. You must use Google Chrome or Microsoft Edge on a desktop computer to connect to the Arduino.");
+    alert("Sorry! The Web Serial API is NOT supported in this browser. Use Google Chrome or Microsoft Edge desktop.");
     return;
   }
   
   try {
-    // Request a port and open a connection
     port = await navigator.serial.requestPort();
     await port.open({ baudRate: 9600 });
     writer = port.writable.getWriter();
     
-    // Start listening to the ESP32 in the background
     readLoop();
-    
-    // Switch to game and start
-    switchScreen(gameScreen);
-    score = 0;
-    updateScore();
-    nextRound();
+    startGame();
   } catch (err) {
-    console.error('Serial Connection Failed:', err);
-    
-    // Only show alert if they didn't just casually cancel the popup
     if (!err.message.includes('No port selected')) {
-      alert('Failed to connect to Arduino!\n\nReason: ' + err.message + '\n\nMake sure the Arduino IDE Serial Monitor is CLOSED! Only one program can use the port at a time.');
+      alert('Failed to connect to Arduino!\n\nReason: ' + err.message + '\n\nMake sure the Arduino IDE Serial Monitor is CLOSED!');
     }
   }
 });
@@ -76,84 +67,12 @@ connectBtn.addEventListener('click', async () => {
 skipBtn.addEventListener('click', () => {
   port = null;
   writer = null;
-  switchScreen(gameScreen);
-  score = 0;
-  updateScore();
-  nextRound();
+  startGame();
 });
 
-function nextRound() {
-  // Clear any existing timer
-  clearTimeout(timerTimeout);
-  
-  // Pick random targets
-  currentDirectionTarget = arrows[Math.floor(Math.random() * arrows.length)];
-  currentActionTarget = actions[Math.floor(Math.random() * actions.length)];
-  
-  directionContainer.innerText = currentDirectionTarget.symbol;
-  actionContainer.innerText = currentActionTarget.symbol;
-  
-  // Animate the containers for visual feedback
-  directionContainer.classList.remove('pop-animation');
-  actionContainer.classList.remove('pop-animation');
-  void directionContainer.offsetWidth; // trigger reflow
-  void actionContainer.offsetWidth;
-  directionContainer.classList.add('pop-animation');
-  actionContainer.classList.add('pop-animation');
+restartBtn.addEventListener('click', startGame);
 
-  // Reset and start timer bar animation
-  timerBar.style.transition = 'none';
-  timerBar.style.width = '100%';
-  
-  // Small delay to allow browser to render the full width before transitioning
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      timerBar.style.transition = `width ${TIME_LIMIT_MS}ms linear`;
-      timerBar.style.width = '0%';
-    });
-  });
-
-  // Fail condition if time runs out
-  timerTimeout = setTimeout(() => {
-    failSequence();
-  }, TIME_LIMIT_MS);
-}
-
-// handleKeydown removed in favor of global listener
-
-function updateScore() {
-  scoreEl.innerText = score;
-}
-
-async function failSequence() {
-  clearTimeout(timerTimeout);
-  currentActionTarget = null;
-  currentDirectionTarget = null;
-  pressedKeys.clear();
-  
-  // Send 'T' over serial to Arduino
-  try {
-    if (writer) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode('T');
-      await writer.write(data);
-    }
-  } catch (err) {
-    console.error('Failed to send data to Arduino:', err);
-  }
-
-  finalScoreEl.innerText = score;
-  switchScreen(gameOverScreen);
-}
-
-restartBtn.addEventListener('click', () => {
-  score = 0;
-  updateScore();
-  switchScreen(gameScreen);
-  nextRound();
-});
-
-// Continuously read data coming FROM the ESP32 and log it to the browser console
+// --- Background Data Logger ---
 async function readLoop() {
   const textDecoder = new TextDecoderStream();
   const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
@@ -174,56 +93,207 @@ async function readLoop() {
   }
 }
 
-// Event listeners for tracking pressed keys and fullscreen/arcade controls
+// --- Frame by Frame Game Engine ---
+function startGame() {
+  score = 0;
+  strikes = 0;
+  updateHUD();
+  
+  // Clean up old notes
+  activeNotes.forEach(n => n.element.remove());
+  activeNotes = [];
+  pressedKeys.clear();
+  
+  isPlaying = true;
+  lastTimestamp = performance.now();
+  nextSpawnTime = lastTimestamp + 2000; // First note falls after 2 seconds
+  
+  switchScreen(gameScreen);
+  
+  // Wipe any potentially running ghost loop
+  cancelAnimationFrame(gameLoopId);
+  gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+function updateHUD() {
+  scoreEl.innerText = score;
+  strikesEl.innerText = strikes;
+}
+
+function gameLoop(timestamp) {
+  if (!isPlaying) return;
+  lastTimestamp = timestamp;
+
+  // 1. Spawning
+  if (timestamp >= nextSpawnTime) {
+     spawnNote(timestamp);
+     // Target a fun frequency (e.g., spawn a note every 500ms to 900ms)
+     nextSpawnTime = timestamp + 500 + (Math.random() * 400); 
+  }
+
+  // 2. Physics & Movement
+  for (let i = activeNotes.length - 1; i >= 0; i--) {
+     let note = activeNotes[i];
+     let timeAlive = timestamp - note.spawnTime;
+     let currentY = (timeAlive / note.duration) * TRACK_HEIGHT;
+
+     // 3. OOB (Out of Bounds) / Miss check
+     if (currentY > TARGET_Y + HIT_WINDOW_HALF) {
+         note.element.remove();
+         activeNotes.splice(i, 1);
+         registerStrike();
+         continue; // skip the visual update
+     }
+
+     // Visual update
+     note.element.style.transform = `translateY(${currentY}px)`;
+  }
+
+  if (isPlaying) {
+    gameLoopId = requestAnimationFrame(gameLoop);
+  }
+}
+
+function spawnNote(spawnTime) {
+  let lane = laneConfig[Math.floor(Math.random() * laneConfig.length)];
+  
+  let el = document.createElement('div');
+  el.classList.add('note');
+  el.innerText = lane.symbol;
+  document.getElementById(lane.id).appendChild(el);
+
+  // Speed randomly ranges between 2000ms and 4000ms (averaging 3 seconds)
+  let duration = 2000 + (Math.random() * 2000);
+  
+  activeNotes.push({
+    element: el,
+    laneId: lane.id,
+    key: lane.key,
+    spawnTime: spawnTime,
+    duration: duration,
+    handled: false
+  });
+}
+
+function registerStrike() {
+  strikes++;
+  updateHUD();
+  
+  // Flash the border red
+  lanesContainer.style.borderColor = 'var(--danger)';
+  setTimeout(() => { if(lanesContainer) lanesContainer.style.borderColor = 'var(--glass-border)'; }, 200);
+
+  if (strikes >= MAX_STRIKES) {
+    failSequence();
+  }
+}
+
+async function failSequence() {
+  isPlaying = false;
+  cancelAnimationFrame(gameLoopId);
+  
+  // Send 'T' over serial to Arduino
+  try {
+    if (writer) {
+      const encoder = new TextEncoder();
+      await writer.write(encoder.encode('T'));
+    }
+  } catch(err) {
+    console.error('Failed to send data to Arduino:', err);
+  }
+
+  finalScoreEl.innerText = score;
+  switchScreen(gameOverScreen);
+}
+
+// --- Player Input Handling ---
 window.addEventListener('keyup', (e) => {
-  pressedKeys.delete(e.key.toLowerCase());
+  let key = e.key.toLowerCase();
+  pressedKeys.delete(key);
+  
+  // Turn off visual light-up effect
+  let lane = laneConfig.find(l => l.key === key);
+  if (lane) {
+    document.getElementById(lane.id).classList.remove('active-press');
+  }
 });
 
 window.addEventListener('keydown', (e) => {
-  // Fullscreen toggle ('x' or 'X')
-  if (e.key.toLowerCase() === 'x') {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(err => console.log(err));
-    } else {
-      document.exitFullscreen();
-    }
+  let key = e.key.toLowerCase();
+  
+  // Arcady Fullscreen Toggle
+  if (key === 'x') {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err=>console.log(err));
+    else document.exitFullscreen();
+    return;
   }
-
-  // Handle arcade Enter key
-  if (e.key === 'Enter') {
-    if (connectScreen.classList.contains('active')) {
-      connectBtn.click();
-    } else if (gameOverScreen.classList.contains('active')) {
-      restartBtn.click();
-    }
+  
+  // Global Enter
+  if (key === 'enter') {
+    if (connectScreen.classList.contains('active')) connectBtn.click();
+    else if (gameOverScreen.classList.contains('active')) restartBtn.click();
     return;
   }
 
-  // Only check game logic if actively playing
-  if (!gameScreen.classList.contains('active') || !currentDirectionTarget || !currentActionTarget) return;
+  // Halt strictly here if not in the game loop
+  if (!isPlaying) return;
 
-  const key = e.key.toLowerCase();
-  
-  if (key.includes('arrow') || validGameKeys.includes(key)) {
-      e.preventDefault();
+  // Prevent unwanted scrolling when hitting game keys
+  if (key.includes('arrow') || ['a','b'].includes(key)) {
+     e.preventDefault(); 
   }
-
+  
+  // Debounce key hold
+  if (pressedKeys.has(key)) return; 
   pressedKeys.add(key);
 
-  const dirKey = currentDirectionTarget.key.toLowerCase();
-  const actKey = currentActionTarget.key.toLowerCase();
+  let lane = laneConfig.find(l => l.key === key);
+  if (!lane) return; // Non-game keys do absolutely nothing
 
-  // Instant fail if a wrong game key is pressed
-  if (validGameKeys.includes(key) && key !== dirKey && key !== actKey) {
-    failSequence();
-    return;
+  // Give the UI lane a flashy effect so the player knows the button works
+  document.getElementById(lane.id).classList.add('active-press');
+
+  // --- Collision Engine ---
+  const now = performance.now();
+  let hitIndex = -1;
+  let lowestY = -1; // We track lowest Y to hit the bottom-most note exclusively
+
+  // Search exclusively for unhandled notes in the lane the player just pressed
+  for (let i = 0; i < activeNotes.length; i++) {
+     let note = activeNotes[i];
+     if (note.key === key && !note.handled) {
+        let currentY = ((now - note.spawnTime) / note.duration) * TRACK_HEIGHT;
+        if (currentY > lowestY) {
+           lowestY = currentY;
+           hitIndex = i;
+        }
+     }
   }
 
-  // Check win condition
-  if (pressedKeys.has(dirKey) && pressedKeys.has(actKey)) {
-    pressedKeys.clear();
-    score++;
-    updateScore();
-    nextRound();
+  // Resolve Logic
+  if (hitIndex !== -1) {
+     let note = activeNotes[hitIndex];
+     let currentY = ((now - note.spawnTime) / note.duration) * TRACK_HEIGHT;
+     
+     // Is it inside the hitbox boundary constraints?
+     if (Math.abs(currentY - TARGET_Y) <= HIT_WINDOW_HALF) {
+        // HIT!
+        score++;
+        updateHUD();
+        note.handled = true;
+        
+        // Beautiful visual feedback before removal
+        note.element.style.background = 'var(--success)';
+        note.element.style.opacity = '0';
+        note.element.style.transform += ' scale(1.5)';
+        note.element.style.transition = 'all 0.15s ease-out';
+        
+        setTimeout(() => note.element.remove(), 150);
+        activeNotes.splice(hitIndex, 1);
+        return; // Break out, don't trigger strike
+     }
   }
+
+  // If the player pressed a game button, but no note was in the hitbox, it's a strike!
+  registerStrike();
 });

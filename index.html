@@ -6,7 +6,7 @@
   <title>Arduino Alert Sequence Trigger</title>
   <link rel="stylesheet" href="style.css" />
   <!-- Google Fonts for modern typography -->
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;900&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- Connect Screen -->
@@ -24,17 +24,17 @@
   <!-- Game Screen -->
   <div id="game-screen" class="screen">
     <div class="header">
-      <div class="score-display">Score: <span id="score">0</span></div>
+      <div class="score-display">Score: <span id="score" style="color: var(--accent);">0</span> &nbsp;|&nbsp; Strikes: <span id="strikes" style="color: var(--danger);">0</span>/3</div>
     </div>
     
     <div class="game-board">
-      <div id="targets-wrapper">
-        <div id="direction-container" class="target-box"></div>
-        <div id="action-container" class="target-box"></div>
-      </div>
-      
-      <div class="timer-bar-container">
-        <div id="timer-bar"></div>
+      <div id="game-lanes">
+         <div class="lane" id="lane-arrowleft"><div class="target-box">⇦</div></div>
+         <div class="lane" id="lane-arrowdown"><div class="target-box">⇩</div></div>
+         <div class="lane" id="lane-arrowup"><div class="target-box">⇧</div></div>
+         <div class="lane" id="lane-arrowright"><div class="target-box">⇨</div></div>
+         <div class="lane" id="lane-a"><div class="target-box">A</div></div>
+         <div class="lane" id="lane-b"><div class="target-box">B</div></div>
       </div>
     </div>
   </div>
