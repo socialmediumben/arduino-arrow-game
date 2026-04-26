@@ -19,6 +19,14 @@
         <button id="skip-btn" class="glow-btn" style="border-color: #8b949e; color: #8b949e;">Test Locally</button>
       </div>
       <div style="font-size: 1.5rem; margin-top: 2rem; color: var(--accent); font-weight: 900;">HIGH SCORE: <span id="menu-high-score">0</span></div>
+      
+      <!-- Difficulty Selector -->
+      <div style="margin-top: 2rem; display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
+        <span style="color: #8b949e; margin-right:0.5rem;">⇦ Difficulty ⇨ </span>
+        <button class="glow-btn diff-btn" data-level="easy">Easy</button>
+        <button class="glow-btn diff-btn active-diff" data-level="medium">Medium</button>
+        <button class="glow-btn diff-btn" data-level="hard">Hard</button>
+      </div>
     </div>
   </div>
 
@@ -44,7 +52,15 @@
       <p>The sequence has been triggered on the Arduino.</p>
       <div style="font-size: 2.2rem; margin-top: 1rem;">Score: <span id="final-score">0</span></div>
       <div style="font-size: 1.5rem; margin-top: 0.5rem; color: var(--accent); font-weight: 600;">Best: <span id="game-over-best">0</span></div>
-      <button id="restart-btn" class="glow-btn" style="margin-top: 2rem;">Reset Game</button>
+      
+      <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
+        <span style="color: #8b949e; margin-right:0.5rem;">⇦ Difficulty ⇨ </span>
+        <button class="glow-btn diff-btn" data-level="easy">Easy</button>
+        <button class="glow-btn diff-btn active-diff" data-level="medium">Medium</button>
+        <button class="glow-btn diff-btn" data-level="hard">Hard</button>
+      </div>
+
+      <button id="restart-btn" class="glow-btn" style="margin-top: 1.5rem;">Reset Game</button>
     </div>
   </div>
 

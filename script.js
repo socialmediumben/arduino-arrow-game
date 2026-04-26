@@ -27,6 +27,14 @@ const arrowOptions = [
   { key: 'arrowright', symbol: '⇨' }
 ];
 
+const difficultySettings = {
+  easy: { duration: 3000, spawnBase: 800, spawnVar: 1000 },
+  medium: { duration: 2000, spawnBase: 400, spawnVar: 1000 },
+  hard: { duration: 1000, spawnBase: 250, spawnVar: 500 }
+};
+const diffLevels = ['easy', 'medium', 'hard'];
+let currentDiff = 'medium';
+
 const TRACK_HEIGHT = 600; 
 const TARGET_Y = 500; // Target boxes are at bottom: 20px. 600 - 20 - 80 height = 500.
 const HIT_WINDOW_HALF = 80; // +/- 80 pixels is exactly the threshold of visually "touching" the box
@@ -52,6 +60,21 @@ function switchScreen(activeScreen) {
   [connectScreen, gameScreen, gameOverScreen].forEach(s => s.classList.remove('active'));
   activeScreen.classList.add('active');
 }
+
+// --- Difficulty Selectors ---
+function setDifficulty(level) {
+   currentDiff = level;
+   document.querySelectorAll('.diff-btn').forEach(btn => {
+      if (btn.dataset.level === level) btn.classList.add('active-diff');
+      else btn.classList.remove('active-diff');
+   });
+}
+
+document.querySelectorAll('.diff-btn').forEach(btn => {
+   btn.addEventListener('click', (e) => {
+      setDifficulty(e.target.dataset.level);
+   });
+});
 
 // --- Serial Connection Events ---
 connectBtn.addEventListener('click', async () => {
@@ -137,8 +160,8 @@ function gameLoop(timestamp) {
   // 1. Spawning
   if (timestamp >= nextSpawnTime) {
      spawnNote(timestamp);
-     // Randomize spawn frequency (e.g. between 400ms and 1400ms)
-     nextSpawnTime = timestamp + 400 + (Math.random() * 1000); 
+     let diff = difficultySettings[currentDiff];
+     nextSpawnTime = timestamp + diff.spawnBase + (Math.random() * diff.spawnVar); 
   }
 
   // 2. Physics & Movement
@@ -180,8 +203,8 @@ function spawnNote(spawnTime) {
   el.innerText = actualSymbol;
   document.getElementById(lane.id).appendChild(el);
 
-  // Constant falling speed for all notes (2 seconds) prevents overlapping!
-  let duration = 2000;
+  let diff = difficultySettings[currentDiff];
+  let duration = diff.duration;
   
   activeNotes.push({
     element: el,
@@ -264,8 +287,17 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Halt strictly here if not in the game loop
-  if (!isPlaying) return;
+  // Outside Game Engine Nav (Difficulty switching by Joystick Left/Right)
+  if (!isPlaying) {
+    if (key === 'arrowleft') {
+       let idx = diffLevels.indexOf(currentDiff);
+       if (idx > 0) setDifficulty(diffLevels[idx - 1]);
+    } else if (key === 'arrowright') {
+       let idx = diffLevels.indexOf(currentDiff);
+       if (idx < diffLevels.length - 1) setDifficulty(diffLevels[idx + 1]);
+    }
+    return;
+  }
 
   // Prevent unwanted scrolling when hitting game keys
   if (key.includes('arrow') || ['a','b'].includes(key)) {
