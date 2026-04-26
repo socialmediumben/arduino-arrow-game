@@ -137,8 +137,8 @@ function gameLoop(timestamp) {
   // 1. Spawning
   if (timestamp >= nextSpawnTime) {
      spawnNote(timestamp);
-     // Target a fun frequency (e.g., spawn a note every 500ms to 900ms)
-     nextSpawnTime = timestamp + 500 + (Math.random() * 400); 
+     // Randomize spawn frequency (e.g. between 400ms and 1400ms)
+     nextSpawnTime = timestamp + 400 + (Math.random() * 1000); 
   }
 
   // 2. Physics & Movement
@@ -180,8 +180,8 @@ function spawnNote(spawnTime) {
   el.innerText = actualSymbol;
   document.getElementById(lane.id).appendChild(el);
 
-  // Speed randomly ranges between 2000ms and 4000ms (averaging 3 seconds)
-  let duration = 2000 + (Math.random() * 2000);
+  // Constant falling speed for all notes (2 seconds) prevents overlapping!
+  let duration = 2000;
   
   activeNotes.push({
     element: el,
