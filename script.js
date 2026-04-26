@@ -55,10 +55,45 @@ const gameOverBestEl = document.getElementById('game-over-best');
 
 if (menuHighScoreEl) menuHighScoreEl.innerText = highScore;
 
+// --- UI Navigation Structure ---
+let navGrid = [];
+let navRow = 0;
+let navCol = 0;
+
+function buildNavMenuForScreen(screenId) {
+   if (screenId === 'connect-screen') {
+      navGrid = [
+         [document.getElementById('connect-btn'), document.getElementById('skip-btn')],
+         Array.from(document.querySelectorAll('#connect-screen .diff-btn'))
+      ];
+      navRow = 0; navCol = 0;
+   } else if (screenId === 'game-over-screen') {
+      navGrid = [
+         Array.from(document.querySelectorAll('#game-over-screen .diff-btn')),
+         [document.getElementById('restart-btn')]
+      ];
+      navRow = 1; navCol = 0; // Default focus to Restart Game button
+   } else {
+      navGrid = [];
+   }
+   updateNavUI();
+}
+
+function updateNavUI() {
+   document.querySelectorAll('.nav-selected').forEach(btn => btn.classList.remove('nav-selected'));
+   if (navGrid.length === 0 || !navGrid[navRow]) return;
+   
+   let selectedBtn = navGrid[navRow][navCol];
+   if (selectedBtn) {
+      selectedBtn.classList.add('nav-selected');
+   }
+}
+
 // --- Screen Switching Utilities ---
 function switchScreen(activeScreen) {
   [connectScreen, gameScreen, gameOverScreen].forEach(s => s.classList.remove('active'));
   activeScreen.classList.add('active');
+  buildNavMenuForScreen(activeScreen.id);
 }
 
 // --- Difficulty Selectors ---
@@ -75,6 +110,9 @@ document.querySelectorAll('.diff-btn').forEach(btn => {
       setDifficulty(e.target.dataset.level);
    });
 });
+
+// Set up UI navigation state immediately on initial page load
+buildNavMenuForScreen('connect-screen');
 
 // --- Serial Connection Events ---
 connectBtn.addEventListener('click', async () => {
@@ -273,30 +311,37 @@ window.addEventListener('keyup', (e) => {
 window.addEventListener('keydown', (e) => {
   let key = e.key.toLowerCase();
   
-  // Arcady Fullscreen Toggle
   if (key === 'x') {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err=>console.log(err));
     else document.exitFullscreen();
     return;
   }
-  
-  // Global Enter
-  if (key === 'enter') {
-    if (connectScreen.classList.contains('active')) connectBtn.click();
-    else if (gameOverScreen.classList.contains('active')) restartBtn.click();
-    return;
-  }
 
-  // Outside Game Engine Nav (Difficulty switching by Joystick Left/Right)
-  if (!isPlaying) {
-    if (key === 'arrowleft') {
-       let idx = diffLevels.indexOf(currentDiff);
-       if (idx > 0) setDifficulty(diffLevels[idx - 1]);
+  // Arcade Joystick 2D Menu Navigation
+  if (!isPlaying && navGrid.length > 0) {
+    if (key === 'arrowup') {
+       if (navRow > 0) {
+          navRow--;
+          if (navCol >= navGrid[navRow].length) navCol = navGrid[navRow].length - 1;
+          updateNavUI();
+       }
+    } else if (key === 'arrowdown') {
+       if (navRow < navGrid.length - 1) {
+          navRow++;
+          if (navCol >= navGrid[navRow].length) navCol = navGrid[navRow].length - 1;
+          updateNavUI();
+       }
+    } else if (key === 'arrowleft') {
+       if (navCol > 0) { navCol--; updateNavUI(); }
     } else if (key === 'arrowright') {
-       let idx = diffLevels.indexOf(currentDiff);
-       if (idx < diffLevels.length - 1) setDifficulty(diffLevels[idx + 1]);
+       if (navCol < navGrid[navRow].length - 1) { navCol++; updateNavUI(); }
+    } else if (key === 'enter') {
+       let selectedBtn = navGrid[navRow][navCol];
+       if (selectedBtn) selectedBtn.click();
     }
-    return;
+    
+    if (key.includes('arrow')) e.preventDefault(); // Stop window from scrolling
+    return; // Safely halt game loops execution if still on a menu
   }
 
   // Prevent unwanted scrolling when hitting game keys
