@@ -4,6 +4,8 @@ let score = 0;
 let strikes = 0;
 const MAX_STRIKES = 3;
 
+let highScore = parseInt(localStorage.getItem('arcade_highscore')) || 0;
+
 // Game engine variables
 let gameLoopId;
 let lastTimestamp = 0;
@@ -40,6 +42,10 @@ const strikesEl = document.getElementById('strikes');
 const finalScoreEl = document.getElementById('final-score');
 const restartBtn = document.getElementById('restart-btn');
 const lanesContainer = document.getElementById('game-lanes');
+const menuHighScoreEl = document.getElementById('menu-high-score');
+const gameOverBestEl = document.getElementById('game-over-best');
+
+if (menuHighScoreEl) menuHighScoreEl.innerText = highScore;
 
 // --- Screen Switching Utilities ---
 function switchScreen(activeScreen) {
@@ -214,7 +220,15 @@ async function failSequence() {
     console.error('Failed to send data to Arduino:', err);
   }
 
+  // Update High Score tracking
+  if (score > highScore) {
+     highScore = score;
+     localStorage.setItem('arcade_highscore', highScore);
+     if (menuHighScoreEl) menuHighScoreEl.innerText = highScore;
+  }
+
   finalScoreEl.innerText = score;
+  if (gameOverBestEl) gameOverBestEl.innerText = highScore;
   switchScreen(gameOverScreen);
 }
 
