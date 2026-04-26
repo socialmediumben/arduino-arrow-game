@@ -13,12 +13,16 @@ let nextSpawnTime = 0;
 const pressedKeys = new Set();
 
 const laneConfig = [
-  { id: 'lane-arrowleft', key: 'arrowleft', symbol: '⇦' },
-  { id: 'lane-arrowdown', key: 'arrowdown', symbol: '⇩' },
-  { id: 'lane-arrowup', key: 'arrowup', symbol: '⇧' },
-  { id: 'lane-arrowright', key: 'arrowright', symbol: '⇨' },
+  { id: 'lane-joystick', isJoystick: true, symbol: '🕹️' },
   { id: 'lane-a', key: 'a', symbol: 'A' },
   { id: 'lane-b', key: 'b', symbol: 'B' }
+];
+
+const arrowOptions = [
+  { key: 'arrowup', symbol: '⇧' },
+  { key: 'arrowdown', symbol: '⇩' },
+  { key: 'arrowleft', symbol: '⇦' },
+  { key: 'arrowright', symbol: '⇨' }
 ];
 
 const TRACK_HEIGHT = 600; 
@@ -156,10 +160,18 @@ function gameLoop(timestamp) {
 
 function spawnNote(spawnTime) {
   let lane = laneConfig[Math.floor(Math.random() * laneConfig.length)];
+  let actualKey = lane.key;
+  let actualSymbol = lane.symbol;
+
+  if (lane.isJoystick) {
+    let randArrow = arrowOptions[Math.floor(Math.random() * arrowOptions.length)];
+    actualKey = randArrow.key;
+    actualSymbol = randArrow.symbol;
+  }
   
   let el = document.createElement('div');
   el.classList.add('note');
-  el.innerText = lane.symbol;
+  el.innerText = actualSymbol;
   document.getElementById(lane.id).appendChild(el);
 
   // Speed randomly ranges between 2000ms and 4000ms (averaging 3 seconds)
@@ -168,7 +180,7 @@ function spawnNote(spawnTime) {
   activeNotes.push({
     element: el,
     laneId: lane.id,
-    key: lane.key,
+    key: actualKey,
     spawnTime: spawnTime,
     duration: duration,
     handled: false
@@ -212,7 +224,10 @@ window.addEventListener('keyup', (e) => {
   pressedKeys.delete(key);
   
   // Turn off visual light-up effect
-  let lane = laneConfig.find(l => l.key === key);
+  let lane;
+  if (key.includes('arrow')) lane = laneConfig.find(l => l.isJoystick);
+  else lane = laneConfig.find(l => l.key === key);
+
   if (lane) {
     document.getElementById(lane.id).classList.remove('active-press');
   }
@@ -247,7 +262,10 @@ window.addEventListener('keydown', (e) => {
   if (pressedKeys.has(key)) return; 
   pressedKeys.add(key);
 
-  let lane = laneConfig.find(l => l.key === key);
+  let lane;
+  if (key.includes('arrow')) lane = laneConfig.find(l => l.isJoystick);
+  else lane = laneConfig.find(l => l.key === key);
+
   if (!lane) return; // Non-game keys do absolutely nothing
 
   // Give the UI lane a flashy effect so the player knows the button works
